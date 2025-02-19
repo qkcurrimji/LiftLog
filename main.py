@@ -54,7 +54,7 @@ if page == "Log Workout":
 
 elif page == "History":
     st.header("Workout History")
-    
+
     # Filters
     col1, col2 = st.columns(2)
     with col1:
@@ -65,7 +65,7 @@ elif page == "History":
             [workouts_df['date'].min() if not workouts_df.empty else datetime.now().date(),
              datetime.now().date()]
         )
-    
+
     # Filter data
     filtered_df = workouts_df.copy()
     if exercise_filter != "All":
@@ -74,24 +74,42 @@ elif page == "History":
         (filtered_df['date'] >= pd.Timestamp(date_range[0])) &
         (filtered_df['date'] <= pd.Timestamp(date_range[1]))
     ]
-    
-    # Display history
+
+    # Display history with replicate button
     if not filtered_df.empty:
-        st.dataframe(
-            filtered_df.sort_values('date', ascending=False),
-            use_container_width=True
+        for idx, row in filtered_df.sort_values('date', ascending=False).iterrows():
+            with st.expander(f"{row['date']} - {row['exercise']}"):
+                st.write(f"Sets: {row['sets']}")
+                st.write(f"Reps: {row['reps']}")
+                st.write(f"Weight: {row['weight']} kg")
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button(f"Replicate Workout #{idx}", key=f"replicate_{idx}"):
+                        st.session_state.workout_date = datetime.now().date()
+                        save_workout(
+                            st.session_state.workout_date,
+                            row['exercise'],
+                            row['sets'],
+                            row['reps'],
+                            row['weight']
+                        )
+                        st.success("Workout replicated to today!")
+                        st.experimental_rerun()
+                with col2:
+                    if st.button(f"Delete #{idx}", key=f"delete_{idx}"):
+                        delete_workout(idx)
+                        st.success("Workout deleted!")
+                        st.experimental_rerun()
+
+        # Export functionality
+        st.download_button(
+            "Download History as CSV",
+            filtered_df.to_csv(index=False).encode('utf-8'),
+            "workout_history.csv",
+            "text/csv",
+            key='download-csv'
         )
-        
-        # Delete workout option
-        if st.button("Delete Selected Workout"):
-            index_to_delete = st.number_input(
-                "Enter the index of the workout to delete",
-                min_value=0,
-                max_value=len(filtered_df)-1
-            )
-            delete_workout(index_to_delete)
-            st.success("Workout deleted!")
-            st.experimental_rerun()
     else:
         st.info("No workouts found for the selected filters.")
 
