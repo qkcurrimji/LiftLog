@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 from datetime import datetime
 import numpy as np
-from utils import load_data, save_workout, delete_workout, get_exercise_list
+from utils import load_data, save_workout, delete_workout, get_exercise_list, import_excel_workouts, replicate_day_workouts
 
 # Page config
 st.set_page_config(
@@ -55,6 +55,17 @@ if page == "Log Workout":
 elif page == "History":
     st.header("Workout History")
 
+    # Excel Import
+    st.subheader("Import Workouts")
+    uploaded_file = st.file_uploader("Upload Excel File", type=['xlsx', 'xls'])
+    if uploaded_file is not None:
+        success, message = import_excel_workouts(uploaded_file)
+        if success:
+            st.success(message)
+            st.rerun()
+        else:
+            st.error(message)
+
     # Filters
     col1, col2 = st.columns(2)
     with col1:
@@ -75,28 +86,25 @@ elif page == "History":
         (filtered_df['date'].dt.date <= date_range[1])
     ]
 
-    # Display history with replicate button
+    # Group workouts by date
     if not filtered_df.empty:
-        for idx, row in filtered_df.sort_values('date', ascending=False).iterrows():
-            with st.expander(f"{row['date'].strftime('%Y-%m-%d')} - {row['exercise']}"):
-                st.write(f"Sets: {row['sets']}")
-                st.write(f"Reps: {row['reps']}")
-                st.write(f"Weight: {row['weight']} kg")
+        dates = filtered_df['date'].dt.date.unique()
+        for date in sorted(dates, reverse=True):
+            day_workouts = filtered_df[filtered_df['date'].dt.date == date]
 
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button(f"Replicate Workout #{idx}", key=f"replicate_{idx}"):
-                        st.session_state.workout_date = datetime.now().date()
-                        save_workout(
-                            st.session_state.workout_date,
-                            row['exercise'],
-                            row['sets'],
-                            row['reps'],
-                            row['weight']
-                        )
-                        st.success("Workout replicated to today!")
+            with st.expander(f"Workouts on {date}"):
+                # Add replicate day button
+                if st.button(f"Replicate All Workouts from {date}", key=f"replicate_day_{date}"):
+                    success, message = replicate_day_workouts(date)
+                    if success:
+                        st.success(message)
                         st.rerun()
-                with col2:
+                    else:
+                        st.error(message)
+
+                # Display workouts for this day
+                for idx, row in day_workouts.iterrows():
+                    st.write(f"**{row['exercise']}**: {row['sets']} sets × {row['reps']} reps @ {row['weight']} kg")
                     if st.button(f"Delete #{idx}", key=f"delete_{idx}"):
                         delete_workout(idx)
                         st.success("Workout deleted!")
