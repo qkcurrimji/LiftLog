@@ -29,28 +29,28 @@ page = st.sidebar.radio("Go to", ["Log Workout", "History", "Progress"])
 
 if page == "Log Workout":
     st.header("Log Your Workout")
-    
+
     # Date selector
     selected_date = st.date_input("Workout Date", st.session_state.workout_date)
-    
+
     # Exercise input form
     with st.form("workout_form"):
         exercise = st.selectbox("Select Exercise", exercises)
         col1, col2, col3 = st.columns(3)
-        
+
         with col1:
             sets = st.number_input("Sets", min_value=1, max_value=10, value=3)
         with col2:
             reps = st.number_input("Reps", min_value=1, max_value=100, value=10)
         with col3:
             weight = st.number_input("Weight (kg)", min_value=0.0, max_value=500.0, value=20.0)
-            
+
         submit = st.form_submit_button("Log Exercise")
-        
+
         if submit:
             save_workout(selected_date, exercise, sets, reps, weight)
             st.success("Workout logged successfully!")
-            st.experimental_rerun()
+            st.rerun()
 
 elif page == "History":
     st.header("Workout History")
@@ -71,8 +71,8 @@ elif page == "History":
     if exercise_filter != "All":
         filtered_df = filtered_df[filtered_df['exercise'] == exercise_filter]
     filtered_df = filtered_df[
-        (filtered_df['date'] >= pd.Timestamp(date_range[0])) &
-        (filtered_df['date'] <= pd.Timestamp(date_range[1]))
+        (filtered_df['date'].dt.date >= date_range[0]) &
+        (filtered_df['date'].dt.date <= date_range[1])
     ]
 
     # Display history with replicate button
@@ -95,12 +95,12 @@ elif page == "History":
                             row['weight']
                         )
                         st.success("Workout replicated to today!")
-                        st.experimental_rerun()
+                        st.rerun()
                 with col2:
                     if st.button(f"Delete #{idx}", key=f"delete_{idx}"):
                         delete_workout(idx)
                         st.success("Workout deleted!")
-                        st.experimental_rerun()
+                        st.rerun()
 
         # Export functionality
         st.download_button(
@@ -115,13 +115,13 @@ elif page == "History":
 
 elif page == "Progress":
     st.header("Progress Tracking")
-    
+
     # Exercise selector for progress
     exercise_progress = st.selectbox("Select Exercise to Track", exercises)
-    
+
     # Filter data for selected exercise
     exercise_data = workouts_df[workouts_df['exercise'] == exercise_progress]
-    
+
     if not exercise_data.empty:
         # Create progress chart
         fig = px.line(
@@ -137,7 +137,7 @@ elif page == "Progress":
             showlegend=False
         )
         st.plotly_chart(fig, use_container_width=True)
-        
+
         # Statistics
         st.subheader("Statistics")
         col1, col2, col3 = st.columns(3)
