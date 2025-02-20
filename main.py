@@ -62,7 +62,7 @@ elif page == "History":
     with col2:
         date_range = st.date_input(
             "Date Range",
-            [workouts_df['date'].min() if not workouts_df.empty else datetime.now().date(),
+            [workouts_df['date'].min().date() if not workouts_df.empty else datetime.now().date(),
              datetime.now().date()]
         )
 
@@ -78,7 +78,7 @@ elif page == "History":
     # Display history with replicate button
     if not filtered_df.empty:
         for idx, row in filtered_df.sort_values('date', ascending=False).iterrows():
-            with st.expander(f"{row['date']} - {row['exercise']}"):
+            with st.expander(f"{row['date'].strftime('%Y-%m-%d')} - {row['exercise']}"):
                 st.write(f"Sets: {row['sets']}")
                 st.write(f"Reps: {row['reps']}")
                 st.write(f"Weight: {row['weight']} kg")

@@ -9,9 +9,10 @@ def load_data(file_path):
         df = pd.DataFrame(columns=['date', 'exercise', 'sets', 'reps', 'weight'])
         df.to_csv(file_path, index=False)
         return df
-    
+
     df = pd.read_csv(file_path)
-    df['date'] = pd.to_datetime(df['date']).dt.date
+    # Convert date strings to datetime objects
+    df['date'] = pd.to_datetime(df['date'])
     return df
 
 def save_workout(date, exercise, sets, reps, weight):
