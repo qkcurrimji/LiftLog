@@ -10,4 +10,6 @@ dependencies = [
     "plotly>=6.0.0",
     "streamlit>=1.42.1",
     "twilio>=9.4.5",
+    "supabase>=0.1.8",
+    "python-dateutil>=2.8.2"
 ]
