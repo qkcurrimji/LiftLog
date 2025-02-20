@@ -38,10 +38,25 @@ def import_excel_workouts(excel_file):
         required_columns = ['date', 'exercise', 'sets', 'reps', 'weight']
         if not all(col in df.columns for col in required_columns):
             missing_cols = [col for col in required_columns if col not in df.columns]
-            return False, f"Missing columns: {', '.join(missing_cols)}"
+            return False, f"""Missing columns: {', '.join(missing_cols)}
+
+Required Excel format:
+- date: YYYY-MM-DD (e.g., 2025-02-20)
+- exercise: Must match exercise names in our list
+- sets: Number of sets
+- reps: Number of reps
+- weight: Weight in kg"""
 
         # Convert date column
         df['date'] = pd.to_datetime(df['date'], format='mixed')
+
+        # Validate exercises against our list
+        valid_exercises = set(get_exercise_list())
+        invalid_exercises = set(df['exercise']) - valid_exercises
+        if invalid_exercises:
+            return False, f"""Invalid exercises found: {', '.join(invalid_exercises)}
+
+Valid exercises are: {', '.join(valid_exercises)}"""
 
         # Load existing data
         existing_df = load_data('data/workouts.csv')
@@ -54,7 +69,11 @@ def import_excel_workouts(excel_file):
 
         return True, f"Successfully imported {len(df)} workouts"
     except Exception as e:
-        return False, f"Error importing Excel file: {str(e)}"
+        return False, f"""Error importing Excel file: {str(e)}
+
+Please ensure your Excel file has these columns:
+date | exercise | sets | reps | weight
+2025-02-20 | Bench Press | 3 | 10 | 20.0"""
 
 def replicate_day_workouts(source_date):
     """Replicate all workouts from a specific date to today."""

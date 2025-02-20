@@ -4,6 +4,7 @@ import plotly.express as px
 from datetime import datetime
 import numpy as np
 from utils import load_data, save_workout, delete_workout, get_exercise_list, import_excel_workouts, replicate_day_workouts
+import io
 
 # Page config
 st.set_page_config(
@@ -57,6 +58,37 @@ elif page == "History":
 
     # Excel Import
     st.subheader("Import Workouts")
+    st.markdown("""
+    Please format your Excel file with these columns:
+    - **date**: YYYY-MM-DD (e.g., 2025-02-20)
+    - **exercise**: Must match our exercise list
+    - **sets**: Number of sets
+    - **reps**: Number of reps
+    - **weight**: Weight in kg
+    """)
+
+    # Create example DataFrame
+    example_data = pd.DataFrame({
+        'date': ['2025-02-20', '2025-02-20'],
+        'exercise': ['Bench Press', 'Squat'],
+        'sets': [3, 4],
+        'reps': [10, 8],
+        'weight': [20.0, 40.0]
+    })
+
+    # Create Excel file in memory
+    excel_buffer = io.BytesIO()
+    example_data.to_excel(excel_buffer, index=False, engine='openpyxl')
+    excel_buffer.seek(0)
+
+    st.download_button(
+        "Download Template Excel File",
+        excel_buffer,
+        "workout_template.xlsx",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key='download-template'
+    )
+
     uploaded_file = st.file_uploader("Upload Excel File", type=['xlsx', 'xls'])
     if uploaded_file is not None:
         success, message = import_excel_workouts(uploaded_file)
