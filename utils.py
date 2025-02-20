@@ -11,15 +11,15 @@ def load_data(file_path):
         return df
 
     df = pd.read_csv(file_path)
-    # Convert date strings to datetime objects
-    df['date'] = pd.to_datetime(df['date'])
+    # Convert date strings to datetime objects with flexible parsing
+    df['date'] = pd.to_datetime(df['date'], format='mixed')
     return df
 
 def save_workout(date, exercise, sets, reps, weight):
     """Save workout data to CSV file."""
     df = load_data('data/workouts.csv')
     new_workout = pd.DataFrame({
-        'date': [date],
+        'date': [pd.Timestamp(date)],
         'exercise': [exercise],
         'sets': [sets],
         'reps': [reps],
@@ -36,19 +36,10 @@ def delete_workout(index):
 
 def get_exercise_list():
     """Return list of available exercises."""
-    exercises = [
-        "Bench Press",
-        "Squat",
-        "Deadlift",
-        "Shoulder Press",
-        "Bent Over Row",
-        "Pull-ups",
-        "Push-ups",
-        "Bicep Curls",
-        "Tricep Extensions",
-        "Leg Press"
-    ]
-    return sorted(exercises)
+    if os.path.exists('data/exercises.csv'):
+        df = pd.read_csv('data/exercises.csv')
+        return sorted(df['name'].tolist())
+    return []
 
 # Create data directory if it doesn't exist
 os.makedirs('data', exist_ok=True)
