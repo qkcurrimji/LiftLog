@@ -108,6 +108,15 @@ if page == "Log Workout":
 
 elif page == "History":
     st.header("Workout History")
+    uploaded_file = st.file_uploader("Upload your historical workout Excel file", type=["xlsx"])
+if uploaded_file is not None:
+    success, message = import_excel_workouts(uploaded_file)
+    if success:
+        st.success(message)
+        st.rerun()  # refresh the app to show updated data
+    else:
+        st.error(message)
+
     col1, col2 = st.columns(2)
     with col1:
         exercise_filter = st.selectbox("Filter by Exercise", ["All"] + exercises)
