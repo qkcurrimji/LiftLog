@@ -5,8 +5,8 @@ from supabase import create_client, Client
 from dateutil.parser import parse, ParserError
 
 # Initialize Supabase client using credentials from st.secrets
-SUPABASE_URL = st.secrets["supabase"]["https://xwcwmbgrotyotzefcghi.supabase.co"]
-SUPABASE_KEY = st.secrets["supabase"]["eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3Y3dtYmdyb3R5b3R6ZWZjZ2hpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAwNzM3NDcsImV4cCI6MjA1NTY0OTc0N30.2Q8aYBmuPoNBJ4tWkPXp6hzptQOi7evnOxk97l-pi1A"]
+SUPABASE_URL = st.secrets["supabase"]["url"]
+SUPABASE_KEY = st.secrets["supabase"]["key"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def load_data():
