@@ -1,6 +1,7 @@
 import pandas as pd
 from datetime import datetime
 import streamlit as st
+import supabase
 from supabase import create_client, Client
 from dateutil.parser import parse, ParserError
 
