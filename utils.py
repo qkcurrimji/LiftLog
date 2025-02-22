@@ -97,7 +97,7 @@ def import_excel_workouts(excel_file):
                 "workout_date": str(row["CleanedDate"]),
                 "exercise": row["ExerciseName"],
                 "sets": 1,  # Each row is one set
-                "reps": row["Reps"],
+                "reps": int(row["Reps"]),
                 "weight": row["WeightKG"]
             }
             supabase.table("workouts").insert(data).execute()
