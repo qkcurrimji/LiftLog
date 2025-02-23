@@ -123,12 +123,6 @@ elif page == "History":
     # Load data based on the checkbox: if show_all is True, load all; otherwise, last 45 days only.
     workouts_df = load_data(last_45_days=not show_all)
     
-    # Display the min and max dates for debugging (optional)
-    if not workouts_df.empty:
-        st.write("Data range loaded:")
-        st.write("Minimum date:", workouts_df['workout_date'].min())
-        st.write("Maximum date:", workouts_df['workout_date'].max())
-    
     col1, col2 = st.columns(2)
     with col1:
         exercise_filter = st.selectbox("Filter by Exercise", ["All"] + get_exercise_list())
