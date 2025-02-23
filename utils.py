@@ -16,20 +16,20 @@ def load_data(last_45_days=True):
     Otherwise, fetch all rows (up to a specified maximum).
     Results are ordered by workout_date in ascending order.
     """
-    max_rows = 10000  # Adjust as needed
+    max_rows = 10000  # Set high enough to cover your total rows
     if last_45_days:
         last_date = (datetime.now() - timedelta(days=45)).date()
         response = supabase.table("workouts")\
             .select("*")\
             .gte("workout_date", str(last_date))\
             .order("workout_date")\
-            .range(0, max_rows)\
+            .limit(max_rows)\
             .execute()
     else:
         response = supabase.table("workouts")\
             .select("*")\
             .order("workout_date")\
-            .range(0, max_rows)\
+            .limit(max_rows)\
             .execute()
 
     data = response.data
