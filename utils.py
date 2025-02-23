@@ -13,29 +13,29 @@ def load_data(last_45_days=True):
     """
     Load workout data from the Supabase 'workouts' table as a pandas DataFrame.
     If last_45_days is True, only fetch rows where workout_date is within the last 45 days.
-    Otherwise, fetch all rows (up to a specified maximum).
+    Otherwise, fetch all rows by iterating in batches.
     Results are ordered by workout_date in ascending order.
     """
-    max_rows = 10000  # Set high enough to cover your total rows
+    batch_size = 1000
+    offset = 0
+    all_data = []
+
     if last_45_days:
         last_date = (datetime.now() - timedelta(days=45)).date()
-        response = supabase.table("workouts")\
-            .select("*")\
-            .gte("workout_date", str(last_date))\
-            .order("workout_date")\
-            .limit(max_rows)\
-            .execute()
-    else:
-        response = supabase.table("workouts")\
-            .select("*")\
-            .order("workout_date")\
-            .limit(max_rows)\
-            .execute()
+    
+    while True:
+        query = supabase.table("workouts").select("*").order("workout_date")
+        if last_45_days:
+            query = query.gte("workout_date", str(last_date))
+        # Fetch a batch of rows using the range method
+        response = query.range(offset, offset + batch_size - 1).execute()
+        batch = response.data
+        if not batch:
+            break
+        all_data.extend(batch)
+        offset += batch_size
 
-    data = response.data
-    if data is None:
-        data = []
-    df = pd.DataFrame(data)
+    df = pd.DataFrame(all_data)
     if not df.empty and "workout_date" in df.columns:
         df['workout_date'] = pd.to_datetime(df['workout_date'])
     return df
