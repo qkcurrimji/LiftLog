@@ -25,6 +25,7 @@ def load_data(last_45_days=True):
     Load workout data from the Supabase 'workouts' table as a pandas DataFrame.
     If last_45_days is True, only fetch rows where workout_date is within the last 45 days.
     Otherwise, fetch all rows (up to a specified maximum).
+    Results are ordered by workout_date in ascending order.
     """
     max_rows = 10000  # Adjust as needed
     if last_45_days:
@@ -32,11 +33,13 @@ def load_data(last_45_days=True):
         response = supabase.table("workouts")\
             .select("*")\
             .gte("workout_date", str(last_date))\
+            .order("workout_date", ascending=True)\
             .range(0, max_rows)\
             .execute()
     else:
         response = supabase.table("workouts")\
             .select("*")\
+            .order("workout_date", ascending=True)\
             .range(0, max_rows)\
             .execute()
 
@@ -47,7 +50,6 @@ def load_data(last_45_days=True):
     if not df.empty and "workout_date" in df.columns:
         df['workout_date'] = pd.to_datetime(df['workout_date'])
     return df
-
 
 def save_workout(date, exercise, sets, reps, weight):
     """
