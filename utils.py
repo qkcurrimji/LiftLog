@@ -22,13 +22,13 @@ def load_data(last_45_days=True):
         response = supabase.table("workouts")\
             .select("*")\
             .gte("workout_date", str(last_date))\
-            .order("workout_date", ascending=True)\
+            .order("workout_date", True)\
             .range(0, max_rows)\
             .execute()
     else:
         response = supabase.table("workouts")\
             .select("*")\
-            .order("workout_date", ascending=True)\
+            .order("workout_date", True)\
             .range(0, max_rows)\
             .execute()
 
