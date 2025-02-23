@@ -18,11 +18,11 @@ if 'workout_date' not in st.session_state:
 
 # Load data
 workouts_df = load_data(last_45_days=False)  # or True, depending on your test
-st.write("Total rows loaded:", workouts_df.shape[0])
 
 exercises = get_exercise_list()
 
 # For debugging:
+# st.write("Total rows loaded:", workouts_df.shape[0])
 # if not workouts_df.empty:
 #     min_date = workouts_df['workout_date'].min()
 #     max_date = workouts_df['workout_date'].max()
@@ -130,15 +130,18 @@ elif page == "History":
     with col1:
         exercise_filter = st.selectbox("Filter by Exercise", ["All"] + get_exercise_list())
     with col2:
-        # Set the date range picker based on the loaded data
         if not workouts_df.empty:
             min_date = workouts_df['workout_date'].min().date()
+            max_date = workouts_df['workout_date'].max().date()
         else:
-            min_date = datetime.now().date()
+            min_date = max_date = datetime.now().date()
+            # Use the loaded data's min and max dates as the default range
         date_range = st.date_input(
             "Date Range",
-            [min_date, datetime.now().date()]
+            [min_date, max_date]
         )
+    
+    
     
     filtered_df = workouts_df.copy()
     if exercise_filter != "All":
