@@ -16,22 +16,20 @@ st.set_page_config(
 if 'workout_date' not in st.session_state:
     st.session_state.workout_date = datetime.now().date()
 
-# Load data from Supabase
-# workouts_df = load_data()
-
 # Load data
 workouts_df = load_data(last_45_days=False)  # or True, depending on your test
 st.write("Total rows loaded:", workouts_df.shape[0])
 
 exercises = get_exercise_list()
 
-if not workouts_df.empty:
-    min_date = workouts_df['workout_date'].min()
-    max_date = workouts_df['workout_date'].max()
-    st.write("Minimum workout date:", min_date)
-    st.write("Maximum workout date:", max_date)
-else:
-    st.write("No workout data loaded.")
+# For debugging:
+# if not workouts_df.empty:
+#     min_date = workouts_df['workout_date'].min()
+#     max_date = workouts_df['workout_date'].max()
+#     st.write("Minimum workout date:", min_date)
+#     st.write("Maximum workout date:", max_date)
+# else:
+#     st.write("No workout data loaded.")
 
 
 st.title("💪 Workout Logger")
