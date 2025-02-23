@@ -20,6 +20,15 @@ if 'workout_date' not in st.session_state:
 workouts_df = load_data()
 exercises = get_exercise_list()
 
+if not workouts_df.empty:
+    min_date = workouts_df['workout_date'].min()
+    max_date = workouts_df['workout_date'].max()
+    st.write("Minimum workout date:", min_date)
+    st.write("Maximum workout date:", max_date)
+else:
+    st.write("No workout data loaded.")
+
+
 st.title("💪 Workout Logger")
 
 # Sidebar navigation for different pages
