@@ -9,17 +9,36 @@ SUPABASE_URL = st.secrets["supabase"]["url"]
 SUPABASE_KEY = st.secrets["supabase"]["key"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+import pandas as pd
+from datetime import datetime, timedelta
+import streamlit as st
+from supabase import create_client, Client
+from dateutil.parser import parse, ParserError
+
+# Initialize Supabase client using credentials from st.secrets
+SUPABASE_URL = st.secrets["supabase"]["url"]
+SUPABASE_KEY = st.secrets["supabase"]["key"]
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
 def load_data(last_45_days=True):
     """
     Load workout data from the Supabase 'workouts' table as a pandas DataFrame.
     If last_45_days is True, only fetch rows where workout_date is within the last 45 days.
+    Otherwise, fetch all rows (up to a specified maximum).
     """
+    max_rows = 10000  # Adjust as needed
     if last_45_days:
-        # Calculate the date 45 days ago
         last_date = (datetime.now() - timedelta(days=45)).date()
-        response = supabase.table("workouts").select("*").gte("workout_date", str(last_date)).execute()
+        response = supabase.table("workouts")\
+            .select("*")\
+            .gte("workout_date", str(last_date))\
+            .range(0, max_rows)\
+            .execute()
     else:
-        response = supabase.table("workouts").select("*").execute()
+        response = supabase.table("workouts")\
+            .select("*")\
+            .range(0, max_rows)\
+            .execute()
 
     data = response.data
     if data is None:
@@ -28,6 +47,7 @@ def load_data(last_45_days=True):
     if not df.empty and "workout_date" in df.columns:
         df['workout_date'] = pd.to_datetime(df['workout_date'])
     return df
+
 
 def save_workout(date, exercise, sets, reps, weight):
     """
