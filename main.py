@@ -117,22 +117,41 @@ if page == "Log Workout":
 
 elif page == "History":
     st.header("Workout History")
+    
+    # Option to choose between last 45 days vs. all data
+    show_all = st.checkbox("Show all data", value=False)
+    # Load data based on the checkbox: if show_all is True, load all; otherwise, last 45 days only.
+    workouts_df = load_data(last_45_days=not show_all)
+    
+    # Display the min and max dates for debugging (optional)
+    if not workouts_df.empty:
+        st.write("Data range loaded:")
+        st.write("Minimum date:", workouts_df['workout_date'].min())
+        st.write("Maximum date:", workouts_df['workout_date'].max())
+    
     col1, col2 = st.columns(2)
     with col1:
-        exercise_filter = st.selectbox("Filter by Exercise", ["All"] + exercises)
+        exercise_filter = st.selectbox("Filter by Exercise", ["All"] + get_exercise_list())
     with col2:
+        # Set the date range picker based on the loaded data
+        if not workouts_df.empty:
+            min_date = workouts_df['workout_date'].min().date()
+        else:
+            min_date = datetime.now().date()
         date_range = st.date_input(
             "Date Range",
-            [workouts_df['workout_date'].min().date() if not workouts_df.empty else datetime.now().date(),
-             datetime.now().date()]
+            [min_date, datetime.now().date()]
         )
+    
     filtered_df = workouts_df.copy()
     if exercise_filter != "All":
         filtered_df = filtered_df[filtered_df['exercise'] == exercise_filter]
-    filtered_df = filtered_df[
-        (filtered_df['workout_date'].dt.date >= date_range[0]) &
-        (filtered_df['workout_date'].dt.date <= date_range[1])
-    ]
+    if not filtered_df.empty:
+        filtered_df = filtered_df[
+            (filtered_df['workout_date'].dt.date >= date_range[0]) &
+            (filtered_df['workout_date'].dt.date <= date_range[1])
+        ]
+    
     if not filtered_df.empty:
         dates = filtered_df['workout_date'].dt.date.unique()
         for date in sorted(dates, reverse=True):

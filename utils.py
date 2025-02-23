@@ -9,14 +9,23 @@ SUPABASE_URL = st.secrets["supabase"]["url"]
 SUPABASE_KEY = st.secrets["supabase"]["key"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-def load_data():
-    """Load all workout data from the Supabase 'workouts' table as a pandas DataFrame."""
-    response = supabase.table("workouts").select("*").execute()
+def load_data(last_45_days=True):
+    """
+    Load workout data from the Supabase 'workouts' table as a pandas DataFrame.
+    If last_45_days is True, only fetch rows where workout_date is within the last 45 days.
+    """
+    if last_45_days:
+        # Calculate the date 45 days ago
+        last_date = (datetime.now() - timedelta(days=45)).date()
+        response = supabase.table("workouts").select("*").gte("workout_date", str(last_date)).execute()
+    else:
+        response = supabase.table("workouts").select("*").execute()
+
     data = response.data
     if data is None:
         data = []
     df = pd.DataFrame(data)
-    if not df.empty:
+    if not df.empty and "workout_date" in df.columns:
         df['workout_date'] = pd.to_datetime(df['workout_date'])
     return df
 
