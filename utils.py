@@ -9,17 +9,6 @@ SUPABASE_URL = st.secrets["supabase"]["url"]
 SUPABASE_KEY = st.secrets["supabase"]["key"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-import pandas as pd
-from datetime import datetime, timedelta
-import streamlit as st
-from supabase import create_client, Client
-from dateutil.parser import parse, ParserError
-
-# Initialize Supabase client using credentials from st.secrets
-SUPABASE_URL = st.secrets["supabase"]["url"]
-SUPABASE_KEY = st.secrets["supabase"]["key"]
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
 def load_data(last_45_days=True):
     """
     Load workout data from the Supabase 'workouts' table as a pandas DataFrame.
