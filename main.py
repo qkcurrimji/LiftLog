@@ -12,145 +12,196 @@ st.set_page_config(
     layout="wide"
 )
 
-# Initialize session state for selected workout date
+def custom_autocomplete(label, options, key=None, default=""):
+    """
+    Custom autocomplete component that allows both selection from existing options
+    and adding new values. Form-compatible version.
+    """
+    # Ensure options is not empty and is a list
+    options = sorted(list(set(options))) if options else ["No exercises found"]
+
+    # Determine the default mode: "Select Existing" if default exists in options, else "Type New"
+    if default and default in options:
+        default_mode = "Select Existing"
+    else:
+        default_mode = "Type New"
+
+    container = st.container()
+    with container:
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            # Use the index parameter to set the default radio selection based on default_mode
+            default_index = 1 if default_mode == "Select Existing" else 0
+            input_type = st.radio(
+                "Choose input type:",
+                options=["Type New", "Select Existing"],
+                key=f"{key}_type",
+                index=default_index,
+                horizontal=True
+            )
+        with col2:
+            if input_type == "Select Existing":
+                # If default is in options, set that as the initial index in the selectbox
+                if default in options:
+                    default_select_index = options.index(default)
+                else:
+                    default_select_index = 0
+                value = st.selectbox(
+                    " ",  # Empty label since the main label is shown above
+                    options=options,
+                    key=f"{key}_select",
+                    index=default_select_index
+                )
+                st.caption(label)
+            else:
+                # Set the text input's value to the default only if default_mode is "Type New"
+                default_text = default if default_mode == "Type New" else ""
+                value = st.text_input(
+                    " ",  # Empty label since the main label is shown above
+                    value=default_text,
+                    key=f"{key}_input",
+                    placeholder="Type new exercise name"
+                )
+                st.caption(label)
+    return value
+
+# Initialize session state variables
 if 'workout_date' not in st.session_state:
     st.session_state.workout_date = datetime.now().date()
+if 'show_all_data' not in st.session_state:
+    st.session_state.show_all_data = False
+if 'current_exercise_filter' not in st.session_state:
+    st.session_state.current_exercise_filter = "All"
 
-# Load data
-workouts_df = load_data(last_45_days=False)  # or True, depending on your test
+@st.cache_data(ttl=300)
+def get_filtered_workouts(df, exercise_filter, start_date, end_date):
+    """Cache filtered workout data to avoid recomputation"""
+    filtered = df.copy()
+    if exercise_filter != "All":
+        filtered = filtered[filtered['exercise'] == exercise_filter]
+    if start_date and end_date:
+        filtered = filtered[
+            (filtered['workout_date'].dt.date >= start_date) &
+            (filtered['workout_date'].dt.date <= end_date)
+        ]
+    return filtered
 
+# Load data once at the start
+workouts_df = load_data(last_45_days=not st.session_state.show_all_data)
 exercises = get_exercise_list()
 
-# For debugging:
-# st.write("Total rows loaded:", workouts_df.shape[0])
-# if not workouts_df.empty:
-#     min_date = workouts_df['workout_date'].min()
-#     max_date = workouts_df['workout_date'].max()
-#     st.write("Minimum workout date:", min_date)
-#     st.write("Maximum workout date:", max_date)
-# else:
-#     st.write("No workout data loaded.")
+st.title("Workout Logger")
 
-
-st.title("💪 Workout Logger")
-
-# Sidebar navigation for different pages
+# Sidebar navigation
 st.sidebar.header("Navigation")
 page = st.sidebar.radio("Go to", ["Log Workout", "History", "Progress"])
 
 if page == "Log Workout":
     st.header("Log Workout")
     
-    # Common date selector for both tabs
     selected_date = st.date_input("Workout Date", st.session_state.workout_date)
     
-    # Create two tabs: one for viewing and one for logging workouts
     tab_view, tab_log = st.tabs(["View Workouts", "Log Workout"])
     
     with tab_view:
         st.subheader("Today's Workouts")
-        # Filter workouts by the selected date
-        todays_workouts = workouts_df[workouts_df['workout_date'].dt.date == selected_date]
+        todays_workouts = get_filtered_workouts(workouts_df, "All", selected_date, selected_date)
         
         if not todays_workouts.empty:
-            # Group workouts by exercise so that multiple sets appear together
-            grouped = todays_workouts.groupby('exercise')
-            for exercise_name, group_df in grouped:
+            for exercise_name, group_df in todays_workouts.groupby('exercise'):
                 with st.expander(exercise_name):
                     for _, row in group_df.iterrows():
-                        col1, col2, col3 = st.columns([3, 1, 1])
-                        with col1:
-                            st.write(f"{row['reps']} reps @ {row['weight']} kg")
-                        with col2:
-                            if st.button("Edit", key=f"edit_{row['id']}"):
-                                st.session_state.edit_workout = {
-                                    "id": row['id'],
-                                    "exercise": row['exercise'],
-                                    "reps": row['reps'],
-                                    "weight": row['weight']
-                                }
-                                st.rerun()
-                        with col3:
-                            if st.button("Delete", key=f"delete_{row['id']}"):
-                                delete_workout(row['id'])
-                                st.success("Workout deleted!")
-                                st.rerun()
+                        cols = st.columns([3, 1, 1])
+                        cols[0].write(f"{row['reps']} reps @ {row['weight']} kg")
+                        if cols[1].button("Edit", key=f"edit_{row['id']}"):
+                            st.session_state.edit_workout = {
+                                "id": row['id'],
+                                "exercise": row['exercise'],
+                                "reps": row['reps'],
+                                "weight": row['weight']
+                            }
+                            st.rerun()
+                        if cols[2].button("Delete", key=f"delete_{row['id']}"):
+                            delete_workout(row['id'])
+                            st.cache_data.clear()
+                            st.rerun()
         else:
             st.info("No workouts found for the selected date.")
     
     with tab_log:
-        # Determine if we're editing an existing workout
-        if "edit_workout" in st.session_state:
-            edit_data = st.session_state.edit_workout
-            default_exercise = edit_data["exercise"]
-            default_reps = int(edit_data["reps"])
-            default_weight = float(edit_data["weight"])
-            form_title = "Edit Workout"
-        else:
-            default_exercise = exercises[0] if exercises else ""
-            default_reps = 10
-            default_weight = 20.0
-            form_title = "Log New Workout"
-        
-        with st.form("workout_form"):
+            if "edit_workout" in st.session_state:
+                edit_data = st.session_state.edit_workout
+                default_exercise = edit_data["exercise"]
+                default_reps = int(edit_data["reps"])
+                default_weight = float(edit_data["weight"])
+                form_title = "Edit Workout"
+            else:
+                default_exercise = ""
+                default_reps = 10
+                default_weight = 20.0
+                form_title = "Log New Workout"
+            
             st.subheader(form_title)
-            default_index = exercises.index(default_exercise) if default_exercise in exercises else 0
-            exercise = st.selectbox("Select Exercise", exercises, index=default_index)
-            col1, col2 = st.columns(2)
-            with col1:
-                reps = st.number_input("Reps", min_value=1, max_value=100, value=default_reps)
-            with col2:
-                weight = st.number_input("Weight (kg)", min_value=0.0, max_value=500.0, value=default_weight)
-            submit = st.form_submit_button("Save Workout")
-            if submit:
-                if "edit_workout" in st.session_state:
-                    delete_workout(st.session_state.edit_workout["id"])
-                    save_workout(selected_date, exercise, 1, reps, weight)
-                    st.success("Workout updated successfully!")
-                    del st.session_state.edit_workout
-                else:
-                    save_workout(selected_date, exercise, 1, reps, weight)
-                    st.success("Workout logged successfully!")
-                st.rerun()
-        
-        if "edit_workout" in st.session_state:
-            if st.button("Cancel Edit"):
-                del st.session_state.edit_workout
-                st.rerun()
+            
+            exercise = custom_autocomplete(
+                "Exercise Name",
+                exercises,
+                key="workout_exercise",
+                default=default_exercise
+            )
+            with st.form("workout_form", clear_on_submit=True):
+                st.write("Selected Exercise:", exercise)
+                col1, col2 = st.columns(2)
+                with col1:
+                    reps = st.number_input("Reps", min_value=1, max_value=100, value=default_reps)
+                with col2:
+                    weight = st.number_input("Weight (kg)", min_value=0.0, max_value=500.0, value=default_weight)
+                
+                submitted = st.form_submit_button("Save Workout")
+                if submitted:
+                    # Validate and clean exercise name
+                    exercise_clean = exercise.strip()
+                    if not exercise_clean:
+                        st.error("Please enter an exercise name")
+                        st.stop()
+                    
+                    # Title case the exercise name for consistency
+                    exercise_clean = exercise_clean.title()
+                    
+                    if "edit_workout" in st.session_state:
+                        delete_workout(st.session_state.edit_workout["id"])
+                    save_workout(selected_date, exercise_clean, 1, reps, weight)
+                    st.cache_data.clear()
+                    if "edit_workout" in st.session_state:
+                        del st.session_state.edit_workout
+                    st.success("Workout saved successfully!")
+                    st.rerun()  
 
 elif page == "History":
     st.header("Workout History")
     
-    # Option to choose between last 45 days vs. all data
-    show_all = st.checkbox("Show all data", value=False)
-    # Load data based on the checkbox: if show_all is True, load all; otherwise, last 45 days only.
-    workouts_df = load_data(last_45_days=not show_all)
+    show_all = st.checkbox("Show all data", value=st.session_state.show_all_data)
+    if show_all != st.session_state.show_all_data:
+        st.session_state.show_all_data = show_all
+        st.rerun()
     
     col1, col2 = st.columns(2)
     with col1:
-        exercise_filter = st.selectbox("Filter by Exercise", ["All"] + get_exercise_list())
+        exercise_filter = st.selectbox("Filter by Exercise", ["All"] + exercises)
     with col2:
         if not workouts_df.empty:
             min_date = workouts_df['workout_date'].min().date()
             max_date = workouts_df['workout_date'].max().date()
         else:
             min_date = max_date = datetime.now().date()
-            # Use the loaded data's min and max dates as the default range
-        date_range = st.date_input(
-            "Date Range",
-            [min_date, max_date]
-        )
+        date_range = st.date_input("Date Range", [min_date, max_date])
     
-    
-    
-    filtered_df = workouts_df.copy()
-    if exercise_filter != "All":
-        filtered_df = filtered_df[filtered_df['exercise'] == exercise_filter]
-    if not filtered_df.empty:
-        filtered_df = filtered_df[
-            (filtered_df['workout_date'].dt.date >= date_range[0]) &
-            (filtered_df['workout_date'].dt.date <= date_range[1])
-        ]
+    filtered_df = get_filtered_workouts(
+        workouts_df,
+        exercise_filter,
+        date_range[0] if len(date_range) > 0 else None,
+        date_range[1] if len(date_range) > 1 else None
+    )
     
     if not filtered_df.empty:
         dates = filtered_df['workout_date'].dt.date.unique()
@@ -160,15 +211,18 @@ elif page == "History":
                 if st.button(f"Replicate All Workouts from {date}", key=f"replicate_day_{date}"):
                     success, message = replicate_day_workouts(date)
                     if success:
+                        st.cache_data.clear()
                         st.success(message)
                         st.rerun()
                     else:
                         st.error(message)
                 for _, row in day_workouts.iterrows():
                     st.write(f"**{row['exercise']}**: {row['sets']} sets × {row['reps']} reps @ {row['weight']} kg")
+        
+        csv = filtered_df.to_csv(index=False).encode('utf-8')
         st.download_button(
             "Download History as CSV",
-            filtered_df.to_csv(index=False).encode('utf-8'),
+            csv,
             "workout_history.csv",
             "text/csv",
             key='download-csv'
@@ -178,8 +232,10 @@ elif page == "History":
 
 elif page == "Progress":
     st.header("Progress Tracking")
+    
     exercise_progress = st.selectbox("Select Exercise to Track", exercises)
-    exercise_data = workouts_df[workouts_df['exercise'] == exercise_progress]
+    exercise_data = get_filtered_workouts(workouts_df, exercise_progress, None, None)
+    
     if not exercise_data.empty:
         fig = px.line(
             exercise_data,
@@ -194,13 +250,11 @@ elif page == "Progress":
             showlegend=False
         )
         st.plotly_chart(fig, use_container_width=True)
+        
         st.subheader("Statistics")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Max Weight", f"{exercise_data['weight'].max():.1f} kg")
-        with col2:
-            st.metric("Average Weight", f"{exercise_data['weight'].mean():.1f} kg")
-        with col3:
-            st.metric("Total Workouts", len(exercise_data))
+        metrics = st.columns(3)
+        metrics[0].metric("Max Weight", f"{exercise_data['weight'].max():.1f} kg")
+        metrics[1].metric("Average Weight", f"{exercise_data['weight'].mean():.1f} kg")
+        metrics[2].metric("Total Workouts", len(exercise_data))
     else:
         st.info("No data available for the selected exercise.")

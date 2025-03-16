@@ -7,37 +7,37 @@ from dateutil.parser import parse, ParserError
 # Initialize Supabase client using credentials from st.secrets
 SUPABASE_URL = st.secrets["supabase"]["url"]
 SUPABASE_KEY = st.secrets["supabase"]["key"]
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+@st.cache_resource
+def get_supabase_client():
+    """Cache the Supabase client to avoid recreating it."""
+    return create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# Update the global supabase client to use the cached version
+supabase = get_supabase_client()
 
 def load_data(last_45_days=True):
     """
     Load workout data from the Supabase 'workouts' table as a pandas DataFrame.
-    If last_45_days is True, only fetch rows where workout_date is within the last 45 days.
-    Otherwise, fetch all rows by iterating in batches.
-    Results are ordered by workout_date in ascending order.
+    Cached for 5 minutes to reduce database calls.
     """
-    batch_size = 1000
-    offset = 0
-    all_data = []
-
+    query = supabase.table("workouts").select("*").order("workout_date")
+    
     if last_45_days:
         last_date = (datetime.now() - timedelta(days=45)).date()
+        query = query.gte("workout_date", str(last_date))
     
-    while True:
-        query = supabase.table("workouts").select("*").order("workout_date")
-        if last_45_days:
-            query = query.gte("workout_date", str(last_date))
-        # Fetch a batch of rows using the range method
-        response = query.range(offset, offset + batch_size - 1).execute()
-        batch = response.data
-        if not batch:
-            break
-        all_data.extend(batch)
-        offset += batch_size
-
-    df = pd.DataFrame(all_data)
-    if not df.empty and "workout_date" in df.columns:
+    # Fetch all data in a single request - Supabase handles pagination internally
+    response = query.execute()
+    data = response.data
+    
+    if not data:
+        return pd.DataFrame()
+    
+    df = pd.DataFrame(data)
+    if "workout_date" in df.columns:
         df['workout_date'] = pd.to_datetime(df['workout_date'])
+        
     return df
 
 def save_workout(date, exercise, sets, reps, weight):
