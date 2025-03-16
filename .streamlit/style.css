@@ -1,81 +1,164 @@
+/* Import font and base styles */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+body {
+    font-family: 'Roboto', sans-serif;
+}
+
 /* Core design system */
 :root {
-    /* Modern, minimal color palette */
-    --primary: #0f172a;         /* Dark blue/slate for primary elements */
-    --primary-light: #334155;   /* Lighter version for hover states */
-    --background: #ffffff;      /* Clean white background */
-    --surface: #f8fafc;        /* Subtle off-white for cards/sections */
-    --text: #1e293b;           /* Main text color */
-    --text-light: #64748b;     /* Secondary text */
-    --border: #e2e8f0;         /* Subtle borders */
-    --accent: #3b82f6;         /* Blue accent for important actions */
+    /* Color palette */
+    --primary: #0f172a;
+    --primary-light: #334155;
+    --background: #ffffff;
+    --surface: #f8fafc;
+    --text: #1e293b;
+    --text-light: #64748b;
+    --border: #e2e8f0;
+    --accent: #3b82f6;
+    --delete: #ef4444;
     
-    /* Modern spacing system */
+    /* Spacing */
     --space-xs: 0.5rem;
     --space-sm: 0.75rem;
     --space-md: 1.25rem;
     --space-lg: 2rem;
     
-    /* Refined visual properties */
+    /* Visual properties */
     --radius: 8px;
     --radius-sm: 4px;
     --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-/* Layout and spacing */
+/* Layout */
 .main > div {
     max-width: 1200px;
     margin: 0 auto;
     padding: var(--space-md);
 }
 
-/* Main title (Workout Logger) */
+/* Typography */
 .stTitle {
-    color: var(--primary);
     font-size: 3rem !important;
-    font-weight: 700 !important;
-    margin-bottom: var(--space-lg);
 }
 
-/* Page headers (Log Workout, History, Progress) */
 h1, [data-testid="stHeader"] {
-    color: var(--primary);
     font-size: 2.6rem !important;
-    font-weight: 700 !important;
-    margin-bottom: var(--space-md);
 }
 
-/* Sub-headers (View Workouts, Log Workout, Today's Workouts) */
+h2, .stSubheader {
+    font-size: 2rem !important;
+}
+
+.stTitle, 
+h1, [data-testid="stHeader"],
 h2, .stSubheader {
     color: var(--primary);
-    font-size: 2rem !important;
     font-weight: 700 !important;
     margin-bottom: var(--space-md);
 }
 
-/* Field labels and smaller headers */
-h3, .stTextInput label, .stNumberInput label, .stSelectbox label {
+/* Form elements */
+.stTextInput label, 
+.stNumberInput label, 
+.stSelectbox label {
     color: var(--primary);
     font-size: 1.6rem !important;
     font-weight: 600 !important;
-    margin-bottom: var(--space-xs);
+    margin: 0;
+    padding: 0;
 }
 
-/* Modern card styling */
-[data-testid="stForm"], [data-testid="stExpander"] {
-    background: var(--background);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
+/* Input fields */
+.stTextInput > div > div > input,
+.stNumberInput > div > div > input,
+.stSelectbox > div > div,
+.stDateInput input {
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-sm);
+    padding: var(--space-sm);
+    background: var(--background) !important;
     transition: all 0.2s ease;
+    box-shadow: none !important;
 }
 
-[data-testid="stExpander"]:hover {
-    box-shadow: var(--shadow-lg);
+.stTextInput > div > div > input:focus,
+.stNumberInput > div > div > input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 }
 
-/* Modern button styling */
+/* Remove shadows and backgrounds */
+.stDateInput, 
+.stDateInput > div,
+.stDateInput > div > div,
+.stDateInput > div > div > div,
+.stTabs, 
+.stTabs > div,
+[data-testid="stTabContent"],
+[data-testid="stVerticalBlock"],
+[data-testid="stHorizontalBlock"],
+[data-testid="element-container"],
+[data-testid="stTabsContainer"] {
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+/* Tabs */
+.stTabs [data-baseweb="tab-list"] {
+    padding: var(--space-xs);
+    gap: var(--space-xs);
+    border: none !important;
+}
+
+.stTabs [data-baseweb="tab-highlight"] {
+    display: none !important;
+}
+
+.stTabs [data-baseweb="tab"] {
+    color: var(--text-light);
+    border-radius: 0;
+}
+
+.stTabs [data-baseweb="tab"][aria-selected="true"] {
+    color: var(--accent);
+    font-weight: 500;
+    border-bottom: 2px solid var(--accent);
+}
+
+/* Expander */
+[data-testid="stExpander"] {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: var(--space-xs) 0 !important;
+    background: var(--background);
+}
+
+[data-testid="stExpander"] > div:first-child {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+[data-testid="stExpander"] > div:first-child button {
+    padding: 0px 4px !important;
+}
+
+[data-testid="stExpander"] > div:last-child {
+    padding: var(--space-xs) !important;
+}
+
+[data-testid="stExpander"] p {
+    font-size: 1rem !important;
+    margin: var(--space-sm) 0 !important;
+    color: var(--text);
+}
+
+[data-testid="stExpander"] [data-testid="column"] {
+    padding: 0 !important;
+}
+
+/* Buttons */
 .stButton > button {
     background: var(--accent);
     color: white;
@@ -91,82 +174,36 @@ h3, .stTextInput label, .stNumberInput label, .stSelectbox label {
     transform: translateY(-1px);
 }
 
-/* Clean input fields */
-.stTextInput > div > div > input,
-.stNumberInput > div > div > input,
-.stSelectbox > div > div {
+/* Expander buttons */
+[data-testid="stExpander"] .stButton > button {
+    min-width: 80px;
+    padding: 4px 16px;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+[data-testid="stExpander"] .stButton:nth-child(1) > button {
+    background: var(--surface);
+    color: var(--text);
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: var(--space-sm);
-    transition: all 0.2s ease;
 }
 
-.stTextInput > div > div > input:focus,
-.stNumberInput > div > div > input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+[data-testid="stExpander"] .stButton:nth-child(2) > button {
+    background: var(--delete);
 }
 
-/* Modern tabs */
-.stTabs [data-baseweb="tab-list"] {
-    background: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
-    padding: var(--space-xs);
-    gap: var(--space-xs);
-}
-
-/* Remove the default tab highlight/underline */
-.stTabs [data-baseweb="tab-highlight"] {
-    display: none !important;  /* This removes the extra underline */
-}
-
-/* Style individual tabs */
-.stTabs [data-baseweb="tab"] {
-    background: transparent !important;
-    color: var(--text-light);
-    border-radius: 0;
-    box-shadow: none !important;
-}
-
-/* Style active tab with single underline */
-.stTabs [data-baseweb="tab"][aria-selected="true"] {
-    background: transparent !important;
-    color: var(--accent);
-    font-weight: 500;
-    box-shadow: none !important;
-    border-bottom: 2px solid var(--accent);
-}
-
-/* Remove any background from tab panels */
-.stTabs [data-baseweb="tab-panel"] {
-    background: transparent !important;
-    box-shadow: none !important;
-}
-
-/* Remove any remaining shadows from tab containers */
-[data-testid="stTabsContainer"] {
-    background: transparent !important;
-    box-shadow: none !important;
-}
-
-/* Clean metrics display */
+/* Metrics */
 [data-testid="stMetricValue"] {
     color: var(--primary);
     font-size: 1.75rem;
     font-weight: 600;
 }
 
-/* Modern charts */
+/* Charts */
 [data-testid="stPlotlyChart"] > div {
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     background: var(--background);
-    padding: var(--space-sm);
-}
-
-/* Columns */
-[data-testid="column"] {
     padding: var(--space-sm);
 }
 
@@ -176,112 +213,8 @@ h3, .stTextInput label, .stNumberInput label, .stSelectbox label {
     padding: var(--space-md);
 }
 
-/* Sidebar navigation */
 [data-testid="stSidebar"] [data-testid="stRadio"] label {
-    color: var(--primary);
-    font-weight: 500;
-}
-
-/* Tables and data display */
-.stDataFrame {
-    margin: var(--space-md) 0;
-}
-
-/* Ensure label spacing is minimal */
-.stTextInput label, .stNumberInput label, .stSelectbox label {
-    margin: 0;
-    padding: 0;
-}
-
-/* Remove shadows from date input and its container */
-.stDateInput, 
-.stDateInput > div,
-.stDateInput > div > div,
-.stDateInput > div > div > div {
-    box-shadow: none !important;
-    background: transparent !important;
-}
-
-/* Remove background and shadow from tab container */
-.stTabs, 
-.stTabs > div,
-[data-testid="stTabContent"] {
-    background: transparent !important;
-    box-shadow: none !important;
-}
-
-/* Remove any residual shadows from containers */
-[data-testid="stVerticalBlock"],
-[data-testid="stHorizontalBlock"],
-[data-testid="element-container"] {
-    box-shadow: none !important;
-    background: transparent !important;
-}
-
-/* Ensure date input maintains border but no shadow */
-.stDateInput input {
-    border: 1px solid var(--border) !important;
-    background: var(--background) !important;
-    box-shadow: none !important;
-}
-
-/* Style the expander content */
-[data-testid="stExpander"] {
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    margin: var(--space-sm) 0;
-}
-
-/* Minimal padding for expander header (exercise name) */
-[data-testid="stExpander"] > div:first-child button {
-    padding: 0px 4px !important;  /* Extremely minimal padding */
-}
-
-/* Remove any extra margins around the button */
-[data-testid="stExpander"] > div:first-child {
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-/* Keep the content padding as is */
-[data-testid="stExpander"] > div:last-child {
-    padding: var(--space-md) !important;
-}
-
-/* Style the workout details text */
-[data-testid="stExpander"] p {
-    font-size: 1rem !important;
-    margin: var(--space-sm) 0 !important;
-    color: var(--text);
-}
-
-/* Style the buttons container */
-[data-testid="stHorizontalBlock"] {
-    gap: var(--space-sm);
-    margin-top: var(--space-xs);
-}
-
-/* Style Edit and Delete buttons */
-[data-testid="stExpander"] .stButton > button {
-    min-width: 80px;
-    padding: 4px 16px;
-    font-size: 0.875rem;
-    margin: 0;
-}
-
-/* Style Edit button */
-[data-testid="stExpander"] .stButton:nth-child(1) > button {
-    background: var(--surface);
-    color: var(--text);
-    border: 1px solid var(--border);
-}
-
-/* Style Delete button */
-[data-testid="stExpander"] .stButton:nth-child(2) > button {
-    background: #ef4444;  /* Red color for delete */
-}
-
-/* Add spacing between sets */
-[data-testid="stExpander"] [data-testid="column"] {
-    padding: var(--space-xs) 0;
+    color: var(--primary) !important;
+    font-size: 1.2rem !important;
+    font-weight: 600 !important;
 }
