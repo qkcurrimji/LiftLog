@@ -6,66 +6,53 @@ st.set_page_config(
     layout="wide"
 )
 
+with open('.streamlit/style.css') as f:
+    st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+
 import pandas as pd
 import plotly.express as px
 from datetime import datetime, timedelta
 import io
 from utils import load_data, save_workout, delete_workout, get_exercise_list, import_excel_workouts, replicate_day_workouts
 
-# Page configuration
-
 
 def custom_autocomplete(label, options, key=None, default=""):
     """
-    Custom autocomplete component that allows both selection from existing options
-    and adding new values. Form-compatible version.
+    Custom autocomplete component with improved layout and styling.
     """
     # Ensure options is not empty and is a list
     options = sorted(list(set(options))) if options else ["No exercises found"]
 
-    # Determine the default mode: "Select Existing" if default exists in options, else "Type New"
-    if default and default in options:
-        default_mode = "Select Existing"
-    else:
-        default_mode = "Type New"
-
-    container = st.container()
-    with container:
-        col1, col2 = st.columns([1, 2])
-        with col1:
-            # Use the index parameter to set the default radio selection based on default_mode
-            default_index = 1 if default_mode == "Select Existing" else 0
-            input_type = st.radio(
-                "Choose input type:",
-                options=["Type New", "Select Existing"],
-                key=f"{key}_type",
-                index=default_index,
-                horizontal=True
+    # Create a container with custom styling
+    with st.container():
+        # Input type selection with better layout
+        input_type = st.radio(
+            "Choose input type:",
+            options=["New Exercise", "Select Existing"],
+            key=f"{key}_type",
+            horizontal=True,
+            label_visibility="collapsed"  # Hides the label for cleaner layout
+        )
+        
+        # Add some spacing
+        st.write("")
+        
+        # Main input area
+        if input_type == "Select Existing":
+            value = st.selectbox(
+                label,
+                options=options,
+                key=f"{key}_select",
+                index=options.index(default) if default in options else 0
             )
-        with col2:
-            if input_type == "Select Existing":
-                # If default is in options, set that as the initial index in the selectbox
-                if default in options:
-                    default_select_index = options.index(default)
-                else:
-                    default_select_index = 0
-                value = st.selectbox(
-                    " ",  # Empty label since the main label is shown above
-                    options=options,
-                    key=f"{key}_select",
-                    index=default_select_index
-                )
-                st.caption(label)
-            else:
-                # Set the text input's value to the default only if default_mode is "Type New"
-                default_text = default if default_mode == "Type New" else ""
-                value = st.text_input(
-                    " ",  # Empty label since the main label is shown above
-                    value=default_text,
-                    key=f"{key}_input",
-                    placeholder="Type new exercise name"
-                )
-                st.caption(label)
+        else:
+            value = st.text_input(
+                label,
+                value=default if default not in options else "",
+                key=f"{key}_input",
+                placeholder="Type new exercise name"
+            )
+    
     return value
 
 # Initialize session state variables
